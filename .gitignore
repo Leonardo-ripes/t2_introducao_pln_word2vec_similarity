@@ -3,6 +3,10 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# csv files
+corpus_direito_tratado.csv
+pares_skipgram_direito.csv
+
 # C extensions
 *.so
 
