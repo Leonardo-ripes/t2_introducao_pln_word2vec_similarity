@@ -1,5 +1,6 @@
 
 import re
+from collections import Counter
 
 def remove_html_tags(text: str | None) -> str:
 	"""Remove tags HTML de uma string usando regex."""
@@ -52,3 +53,87 @@ def normaliza_texto(text: str | None) -> str:
     texto_sem_datas = remove_datas(texto_sem_numeros)
     texto_final = texto_sem_datas.lower()
     return texto_final
+
+def filtrar_tokens_raros(sentencas_tokenizadas, min_freq=5):
+    """
+        Filtra tokens raros de uma lista de sentenças tokenizadas, 
+        mantendo apenas aqueles que aparecem com frequência mínima.
+        Args:
+            - sentencas_tokenizadas: Lista de sentenças, onde cada sentença é uma lista de tokens.
+            - min_freq: Frequência mínima para um token ser mantido.
+        Returns:
+            - sentencas_filtradas: Lista de sentenças com tokens raros removidos.
+            - frequencias: Dicionário com a frequência de cada token.
+    """
+    frequencias = Counter(
+        token
+        for sentenca in sentencas_tokenizadas
+        for token in sentenca
+    )
+
+    sentencas_filtradas = [
+        [token for token in sentenca if frequencias[token] >= min_freq]
+        for sentenca in sentencas_tokenizadas
+    ]
+
+    return sentencas_filtradas, frequencias
+
+def construir_vocabulario(sentencas_tokenizadas, vocab_size=2000, min_freq=5):
+    """
+        Constrói um vocabulário a partir de uma lista de sentenças tokenizadas,
+        limitando o tamanho do vocabulário e filtrando tokens raros.
+        Args:
+            - sentencas_tokenizadas: Lista de sentenças, onde cada sentença é uma lista de tokens.
+            - vocab_size: Tamanho máximo do vocabulário (excluindo o token <UNK>).
+            - min_freq: Frequência mínima para um token ser incluído no vocabulário.
+        Returns:
+            - vocab: Dicionário mapeando tokens para IDs, incluindo o token <UNK>.
+            - id2word: Dicionário mapeando IDs para tokens.
+    """
+    frequencias = Counter(
+        token
+        for sentenca in sentencas_tokenizadas
+        for token in sentenca
+    )
+
+    tokens_ordenados = [
+        token for token, freq in frequencias.most_common()
+        if freq >= min_freq
+    ]
+
+    tokens_ordenados = tokens_ordenados[:vocab_size]
+
+    vocab = {"<UNK>": 0}
+    for idx, token in enumerate(tokens_ordenados, start=1):
+        vocab[token] = idx
+
+    id2word = {idx: word for word, idx in vocab.items()}
+
+    return vocab, id2word
+
+def gerar_pares_skipgram(sentencas_tokenizadas, vocab, window_size=3):
+    """
+        Gera pares de palavras para o modelo Skip-Gram a partir de uma lista de sentenças tokenizadas.
+        Args:
+            - sentencas_tokenizadas: Lista de sentenças, onde cada sentença é uma lista de tokens.
+            - vocab: Dicionário mapeando tokens para IDs.
+            - window_size: Tamanho da janela de contexto (número de palavras à esquerda e
+                            à direita da palavra central).
+        Returns:
+            - pares: Lista de tuplas (palavra_central_id, palavra_contexto_id).
+    """
+    pares = []
+
+    for sentenca in sentencas_tokenizadas:
+        ids = [vocab.get(token, vocab["<UNK>"]) for token in sentenca]
+
+        for i, centro in enumerate(ids):
+            inicio = max(0, i - window_size)
+            fim = min(len(ids), i + window_size + 1)
+
+            for j in range(inicio, fim):
+                if j != i:
+                    contexto = ids[j]
+                    pares.append((centro, contexto))
+
+    return pares
