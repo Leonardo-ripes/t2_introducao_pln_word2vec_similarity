@@ -1,6 +1,7 @@
 
 import re
 from collections import Counter
+from torch.utils.data import Dataset
 
 def remove_html_tags(text: str | None) -> str:
 	"""Remove tags HTML de uma string usando regex."""
@@ -137,3 +138,16 @@ def gerar_pares_skipgram(sentencas_tokenizadas, vocab, window_size=3):
                     pares.append((centro, contexto))
 
     return pares
+
+class SkipGramPairsDataset(Dataset):
+    def __init__(self, dataframe):
+        self.centros = dataframe["centro"].astype(int).tolist()
+        self.contextos = dataframe["contexto"].astype(int).tolist()
+
+    def __len__(self):
+        return len(self.centros)
+
+    def __getitem__(self, idx):
+        return self.centros[idx], self.contextos[idx]
+
+
