@@ -1,5 +1,6 @@
 
 import re
+import numpy as np
 from collections import Counter
 from torch.utils.data import Dataset
 
@@ -138,6 +139,49 @@ def gerar_pares_skipgram(sentencas_tokenizadas, vocab, window_size=3):
                     pares.append((centro, contexto))
 
     return pares
+
+def cosseno(v1, v2):
+    """
+        Calcula a similaridade de cosseno entre dois vetores.
+        Args:
+            - v1: Primeiro vetor (array numpy).
+            - v2: Segundo vetor (array numpy).
+        Returns:
+            - Similaridade de cosseno entre os dois vetores, um valor entre -1 e 1.
+    """
+    den = np.linalg.norm(v1) * np.linalg.norm(v2)
+    if den == 0:
+        return 0.0
+    return float(np.dot(v1, v2) / den)
+
+def score_para_grau(score_01):
+    """
+        Converte um score de similaridade (entre 0 e 1) para um grau de similaridade em incrementos de 0.25.
+        Args:
+            - score_01: Score de similaridade entre 0 e 1.
+        Returns:
+            - Grau de similaridade em incrementos de 0.25.
+    """
+    if score_01 < 0.125:
+        return 0.0
+    elif score_01 < 0.375:
+        return 0.25
+    elif score_01 < 0.625:
+        return 0.5
+    elif score_01 < 0.875:
+        return 0.75
+    return 1.0
+
+def token_para_id(vocab, token):
+    """
+        Converte um token para seu ID usando o vocabulário, retornando 0 para tokens desconhecidos.
+        Args:
+            - vocab: Dicionário mapeando tokens para IDs.
+            - token: Token a ser convertido.
+        Returns:
+            - ID do token, ou 0 se o token não estiver no vocabulário.
+    """
+    return vocab.get(token, 0)
 
 class SkipGramPairsDataset(Dataset):
     def __init__(self, dataframe):
