@@ -27,6 +27,8 @@ def remover_acentos_pontuacao(text: str | None) -> str:
     text_sem_acentos = re.sub(r'[óòôõö]', 'o', text_sem_acentos)
     text_sem_acentos = re.sub(r'[úùûü]', 'u', text_sem_acentos)
     text_sem_acentos = re.sub(r'[ç]', 'c', text_sem_acentos)
+    # Remove indicadores ordinais e símbolo de grau (ex.: n°, nº, 1ª)
+    text_sem_acentos = re.sub(r'[°ºª]', '', text_sem_acentos)
     # Remove pontuação
     texto_limpo = re.sub(r'[^\w\s]', '', text_sem_acentos)
     return texto_limpo
